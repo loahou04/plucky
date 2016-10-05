@@ -3,7 +3,8 @@
 		"port": 3000
 	},
 	"projects": [{
-		"bitesizeFiles": "/Users/vchenhu/Projects/Pearson/console/hed-console/environments.bitesize",
+		"name": "hed-console",
+		"bitesizeFiles": "/Users/vchenhu/Projects/Pearson/console/hed-console",
 		"jenkins": {
 			"auth": {
 	          "type": "userpass",

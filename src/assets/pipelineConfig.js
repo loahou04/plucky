@@ -30,7 +30,7 @@ module.exports = function(config) {
 	// Get document, or throw exception on error
 	try {
 		// we need to get to the top level directory
-		yamlConfig = yaml.safeLoad(fs.readFileSync(path.join(config.bitesizeFiles), 'utf8'));
+		yamlConfig = yaml.safeLoad(fs.readFileSync(path.join(`${config.bitesizeFiles}/environments.bitesize`), 'utf8'));
 
 	} catch (e) {
 		console.log(e);
@@ -38,7 +38,7 @@ module.exports = function(config) {
 	}
 
 	return {
-		name: yamlConfig.project,
+		id: config.name,
 		environments: orderedEnv(yamlConfig.environments)
 	};
 };

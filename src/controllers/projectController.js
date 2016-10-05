@@ -5,7 +5,8 @@ let express = require('express'),
 	config = require('config'),
 	pipelineConfig = require('../assets/pipelineConfig'),
 	jenkins = require('../assets/jenkins'),
-	shell = require('../utility/shellHelper');
+	sys = require('util'),
+	execFile = require('child_process').execFile;
 
 router.get('/', function(req, res) {
 	let projectList = [];
@@ -20,22 +21,27 @@ router.get('/', function(req, res) {
 // build project with these params
 router.post('/:id', function(req, res) {
 	// patch, minor, major version changes
-	console.log(req.query);
 	if(req.query.version !== 'p' && req.query.version !== 'm' && req.query.version !== 'M') {
 		return res.status(400).send('Bad request, version change must be patch \'p\', minor \'m\', or Major \'M\'  ');	
 	}
 
-	// execute multiple commands in series
-	shell.series([
-	    'cd ../hed-console'
-	    `./createbuild.sh -${req.query.version}`
-	], function(err, stdout, stderr){
-		if(err) {
+	let product = config.projects.find((project) => {
+		return project.name === req.params.id;
+	});
+
+	let startDirectory = process.cwd();
+	process.chdir(product.bitesizeFiles);
+	const child = execFile('../hed-console/createbuild.sh', [`-${req.query.version}`], (err, stdout, stderr) => {
+		if (err) {
 			console.log(err);
 			return res.sendStatus(400);
 		}
-		console.log('executed many commands in a row'); 
+
+		res.sendStatus(200);
 	});
+	// go back to the original directory or we are screwed!
+	process.chdir(startDirectory);
+
 });
 
 module.exports = router;
