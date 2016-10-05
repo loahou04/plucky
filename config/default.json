@@ -1,0 +1,18 @@
+{
+	"appConfig": {
+		"port": 3000
+	},
+	"projects": [{
+		"bitesizeFiles": "/Users/vchenhu/Projects/Pearson/console/hed-console/environments.bitesize",
+		"jenkins": {
+			"auth": {
+	          "type": "userpass",
+	          "userpass": {
+	            "username": "admin",
+	            "password": "very_secret"
+	          }
+	        },
+			"url": "hed-console.prsn.io"
+		}
+	}]
+}
