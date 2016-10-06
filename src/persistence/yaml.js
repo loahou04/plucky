@@ -25,20 +25,27 @@ function orderedEnv(environments) {
 	return orderedEnvList;
 }
 
-module.exports = function(config) {
-	let yamlConfig;
-	// Get document, or throw exception on error
+function getYamlFile(location) {
 	try {
-		// we need to get to the top level directory
-		yamlConfig = yaml.safeLoad(fs.readFileSync(path.join(`${config.bitesizeFiles}/environments.bitesize`), 'utf8'));
+			// we need to get to the top level directory
+			return yaml.safeLoad(fs.readFileSync(path.join(location), 'utf8'));
 
-	} catch (e) {
-		console.log(e);
-		throw new Error('error loading bitsize files');
+		} catch (e) {
+			console.log(e);
+			throw new Error('error loading bitsize files');
+		}
+}
+
+module.exports = {
+	getOrderedEnvironments: function(config) {
+		let yamlConfig = getYamlFile(`${config.bitesizeFiles}/environments.bitesize`);
+
+		return orderedEnv(yamlConfig.environments);
+	},
+	getBuildProjects: function(config) {
+		
+		let yamlConfig = getYamlFile(`${config.bitesizeFiles}/build.bitesize`);
+
+		return yamlConfig;
 	}
-
-	return {
-		id: config.name,
-		environments: orderedEnv(yamlConfig.environments)
-	};
 };

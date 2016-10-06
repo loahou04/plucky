@@ -1,91 +1,85 @@
 'use strict';
 
-const Joi = require('joi');
+let request = require('request');
+const logger = require('../utility/logger');
 const Boom = require('boom');
-const logger = require('./logger');
+const utils = require('../utility/utils');
 const async = require('async');
-const request = require('request');
-const config = require('config');
-const utils = require('./utils');
 
-const statusFromColor = (color)=>{
-  switch(color){
-    case('red'):
-    return 'error';
-    case('blue'):
-    return 'ok';
-    default:
-    return color;
-  }
-};
 
 const requestET = (options, callback)=>{ // Request with basic error trapping built in
   logger.info('Outbound started: ', options);
   if(options.host){
-    options.headers = options.headers || {};
-    options.headers.host = options.host;
+	options.headers = options.headers || {};
+	options.headers.host = options.host;
   }
   if(options.auth){
-    switch(options.auth.type) {
-      case('userpass'):
-        options.auth = options.auth.userpass;
-        break;
-      default:
-        options.auth = options.auth[options.auth.type];
-    }
+	switch(options.auth.type){
+	  case('userpass'):
+		options.auth = options.auth.userpass;
+		break;
+	  default:
+		options.auth = options.auth[options.auth.type];
+	}
   }
   options.url = ((url)=>{
-    let parts = url.split('?');
-    const prefix = parts.shift();
-    let prefixParts = prefix.split('://');
-    const protocol = prefixParts.shift();
-    prefixParts = prefixParts.map((s)=>s.replace(/\/\//g, '\/'));
-    prefixParts.unshift(protocol);
-    parts.unshift(prefixParts.join('://'));
-    return parts.join('?');
+	let parts = url.split('?');
+	const prefix = parts.shift();
+	let prefixParts = prefix.split('://');
+	const protocol = prefixParts.shift();
+	prefixParts = prefixParts.map((s)=>s.replace(/\/\//g, '\/'));
+	prefixParts.unshift(protocol);
+	parts.unshift(prefixParts.join('://'));
+	return parts.join('?');
   })(options.url);
   request(options, (error, resp, payload)=>{
-    logger.info('Outbound completed: ', options, error || payload);
-    if(error){
-      let err = Boom.badRequest(error);
-      err.output.statusCode = 500;
-      return callback(error);
-    }
-    if(!payload){
-      return callback(null, payload);
-    }
-    if(options.returnRaw){
-      return callback(null, payload);
-    }
-    try{
-      const info = JSON.parse(payload);
-      if(info && info.error){
-        const err = Boom.badRequest(info.error);
-        err.output.statusCode = 500;
-        return callback(err);
-      }
-      return callback(null, info);
-    }catch(e){
-      if(payload.indexOf('HTTP ERROR ')>-1){
-        const reCode = /HTTP ERROR ([0-9]+)/;
-        const reReason = /Reason:\n<pre>(.*?)<\/pre>/;
-        const code = reCode.exec(payload)[1];
-        const reason = reReason.exec(payload)[1].trim();
-        let err = Boom.badRequest(reason);
-        err.output.statusCode = +code;
-        return callback(err);
-      }
-      const err = Boom.badRequest(payload);
-      return callback(err);
-    }
+	logger.info('Outbound completed: ', options, error || payload);
+	if(error){
+	  let err = Boom.badRequest(error);
+	  err.output.statusCode = 500;
+	  return callback(error);
+	}
+	if(!payload){
+	  return callback(null, payload);
+	}
+	if(options.returnRaw){
+	  return callback(null, payload);
+	}
+	try{
+	  const info = JSON.parse(payload);
+	  if(info && info.error){
+		const err = Boom.badRequest(info.error);
+		err.output.statusCode = 500;
+		return callback(err);
+	  }
+	  return callback(null, info);
+	} catch(e) {
+	  if(payload.indexOf('HTTP ERROR ')>-1){
+		const reCode = /HTTP ERROR ([0-9]+)/;
+		const reReason = /Reason:\n<pre>(.*?)<\/pre>/;
+		const code = reCode.exec(payload)[1];
+		const reason = reReason.exec(payload)[1].trim();
+		let err = Boom.badRequest(reason);
+		err.output.statusCode = +code;
+		return callback(err);
+	  }
+	  const err = Boom.badRequest(payload);
+	  return callback(err);
+	}
   });
 };
 
-const camelToUnderscore = (str)=>{
-   return (str.replace(/\W+/g, '_')
-             .replace(/([a-z\d])([A-Z])/g, '$1_$2'))
-             .toUpperCase();
+const statusFromColor = (color)=>{
+	switch(color){
+		case('red'):
+		return 'error';
+		case('blue'):
+		return 'ok';
+		default:
+		return color;
+	}
 };
+
 
 class Jenkins {
   constructor(options){
@@ -96,8 +90,7 @@ class Jenkins {
     }:false;
     */
     this.auth = options.auth || false;
-    // this.url = (options.url||options.uri).replace(/\/$/, '');
-    this.host = options.host;
+    this.url = (options.url||options.uri).replace(/\/$/, '');
   }
 
   getJobs(options, callback){
@@ -107,7 +100,6 @@ class Jenkins {
         url,//: `${this.url}${container}/api/json/`,
         auth: this.auth,
         method: 'GET',
-        host: this.host,
     }, (error, payload)=>{
       if(error){
         return callback(error);
@@ -185,13 +177,10 @@ class Jenkins {
   }
 
   queryJob(options, callback){
-    // const {
-    //   jobName,
-    // } = options;
+    const jobName = options.jobName;
     requestET({
       url: `${this.url}/job/${jobName}/api/json`,
       auth: this.auth,
-      host: this.host,
       method: 'GET',
     }, (error, payload)=>{
       if(error){
@@ -207,14 +196,11 @@ class Jenkins {
   }
 
   getJobParams(options, callback){
-    // const {
-    //   jobName,
-    //   passedParams,
-    // } = options;
+    const jobName = options.jobName;
+    const passedParams = options.passedParams;
     requestET({
       url: `${this.url}/job/${jobName}/api/json`,
       auth: this.auth,
-      host: this.host,
       method: 'GET',
     }, (error, payload)=>{
       if(error){
@@ -247,10 +233,8 @@ class Jenkins {
   }
 
   getJobParameters(options, callback){
-    // const {
-    //     jobName,
-    //     payload,
-    //   } = options;
+    const jobName = options.jobName;
+    const payload = options.payload;
     const passedParams = payload||{};
     this.getJobParams({jobName, passedParams}, (err, params)=>{
       if(err){
@@ -262,12 +246,9 @@ class Jenkins {
   }
 
   getJobStatus(options, callback){
-    // const {
-    //     jobName,
-    //   } = options;
+    const jobName = options.jobName;
     requestET({
       url: `${this.url}/job/${jobName}/api/json`,
-      host: this.host,
       auth: this.auth,
       method: 'GET',
     }, (error, payload)=>{
@@ -282,7 +263,6 @@ class Jenkins {
         method: 'GET',
         auth: this.auth,
         url: payload.builds[0].url+'api/json',
-        host: this.host,
       }, (error, payload)=>{
         if(error){
           return callback(error);
@@ -302,15 +282,12 @@ class Jenkins {
   }
 
   getJobOutput(options, callback){
-    // const {
-    //   jobName,
-    //   jobNumber,
-    // } = options;
+    const jobName = options.jobName;
+    const jobNumber = options.jobNumber;
     requestET({
       method: 'GET',
       auth: this.auth,
       url: `${this.url}/job/${jobName}/${jobNumber}/consoleText`,
-      host: this.host,
       returnRaw: true
     }, (error, payload)=>{
       if(error){
@@ -324,14 +301,11 @@ class Jenkins {
   }
 
   getLatestJobNumber(options, callback){
-    // const {
-    //   jobName,
-    // } = options;
+    const jobName = options.jobName;
     requestET({
       method: 'GET',
       auth: this.auth,
       url: `${this.url}/job/${jobName}/api/json`,
-      host: this.host,
     }, (error, payload)=>{
       if(error){
         return callback(error);
@@ -347,23 +321,23 @@ class Jenkins {
   }
 
   startJob(options, callback){
-    // const {
-    //   jobName,
-    //   params
-    // } = options;
-    const passedParams = params || {};
+    const jobName = options.jobName;
+    const passedParams = options.params || {};
     this.getJobParams({jobName, passedParams}, (err, params)=>{
       if(err){
         return callback(err);
       }
+
       const parameters = Object.keys(params).map((key)=>key+'='+encodeURIComponent(params[key])).join('&');
       const cmd = Object.keys(params).length===0?'build':'buildWithParameters';
       requestET({
         url: `${this.url}/job/${jobName}/${cmd}/api/json?${parameters}`,
-        host: this.host,
         auth: this.auth,
         method: 'POST',
-      }, callback);
+      }, function(err, result) {
+
+      	callback(err, result) 
+      });
     });
   }
 
@@ -428,32 +402,63 @@ class Jenkins {
   }
 };
 
-class Provider{
-  init(options){
-    this.connections = {};
-    this.configurations = options;
-  }
+module.exports = {
+	getJobs: function(config) {
+		const jenkins = new Jenkins({
+			url: config.url,
+			auth: jenkins.auth
+		});
+		return new Promise(function(resolve, reject) {
+			jenkins.getJobs({}, function(err, result) {
+				if(err) {
+					return reject(err);
+				}
+				resolve(result);
+			});
+		});
+	},
+	startJob: function(config, job) {
+		const jenkins = new Jenkins({
+			url: config.url,
+			auth: config.auth
+		});
+		return new Promise(function(resolve, reject) {
+			jenkins.startJob({jobName: job}, function(err, result) {
+				if(err) {
+					return reject(err);
+				}
 
-  get(id){
-    const config = this.configurations[id];
-    if(!config){
-      return Boom.badRequest(`No Jenkins instance with ID ${id} found.`);
-    }
-    const connection = this.connections[id] || (this.connections[id] = new Jenkins(config));
-    connection.url = config.url;
-    connection.host = config.host;
-    connection.auth = config.auth;
-    return connection;
-  }
+				resolve(result);
+			});
+		});
+	},
+	waitForIdle: function(config, job) {
+		const jenkins = new Jenkins({
+			url: config.url,
+			auth: config.auth
+		});
+		return new Promise(function(resolve, reject) {
+			jenkins.waitForIdle({jobName: job}, function(err, result) {
+				if(err) {
+					return reject(err);
+				}
+				resolve(result);
+			});
+		});
+	},
+	executeJobs: function(config, jobs) {
+		const jenkins = new Jenkins({
+			url: config.url,
+			auth: config.auth
+		});
+		return new Promise(function(resolve, reject) {
+			jenkins.executeJobs(jobs, function(err, result) {
+				if(err) {
+					return reject(err);
+				}
+
+				resolve(result);
+			});
+		});
+	}
 };
-
-
-//put config in this
-const jenkins = new Jenkins(config.jenkins);
-
-console.log(jenkins.getJobs({url: config.jenkins.url}, function(error, result) {
-  console.log(error);
-  console.log(result);
-}));
-
-module.exports = jenkins;

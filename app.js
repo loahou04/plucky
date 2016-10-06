@@ -7,12 +7,14 @@ let bodyParser = require('body-parser');
 let logger = require('./src/utility/logger');
 let path = require('path');
 let projectController = require('./src/controllers/projectController');
+let releaseController = require('./src/controllers/releaseController');
 
 app.use(bodyParser.json());
 
 app.use(express.static('web'));
 
 app.use('/project', projectController);
+app.use('/release', releaseController);
 
 // log out some basic information
 app.listen(config.appConfig.port, function() {

@@ -2,18 +2,22 @@
 	"appConfig": {
 		"port": 3000
 	},
+	"dbConfig": {
+		"url": "mongodb://localhost:27017/plucky"
+	},
 	"projects": [{
 		"name": "hed-console",
 		"bitesizeFiles": "/Users/vchenhu/Projects/Pearson/console/hed-console",
+		"needsBuildBeforeDeploy": true,
 		"jenkins": {
 			"auth": {
-	          "type": "userpass",
-	          "userpass": {
-	            "username": "admin",
-	            "password": "very_secret"
-	          }
-	        },
-			"url": "hed-console.prsn.io"
+				"type": "userpass",
+					"userpass": {
+					"username": "admin",
+					"password": "very_secret"
+				}
+			},
+			"url": "http://hed-console.prsn.io"
 		}
 	}]
 }
