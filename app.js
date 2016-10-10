@@ -13,8 +13,8 @@ app.use(bodyParser.json());
 
 app.use(express.static('web'));
 
-app.use('/project', projectController);
-app.use('/release', releaseController);
+app.use('/api/project', projectController);
+app.use('/api/release', releaseController);
 
 // log out some basic information
 app.listen(config.appConfig.port, function() {

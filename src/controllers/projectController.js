@@ -8,7 +8,8 @@ const express = require('express'),
 	sys = require('util'),
 	execFile = require('child_process').execFile,
 	releaseService = require('../services/releaseService'),
-	logger = require('../utility/logger');
+	logger = require('../utility/logger'),
+	environmentHealthService = require('../services/environmentHealthService');
 
 
 // get all the projects available
@@ -57,7 +58,10 @@ router.post('/:name', function(req, res) {
 		}).then(() => {
 			let jobs = [];
 			yaml.getBuildProjects(project).components.forEach((asset) => {
-				jobs.push(asset.name);
+				const skipBuilds = project.skipBuilds.indexOf(asset.name);
+				if(skipBuilds === -1) {
+					jobs.push(asset.name);
+				}
 			});
 			return jenkins.executeJobs(project.jenkins, jobs);
 		}).then((result) => {
@@ -77,6 +81,24 @@ router.post('/:name', function(req, res) {
 	// go back to the original directory or we are screwed!
 	process.chdir(startDirectory);
 
+});
+
+router.get('/:name/health', function(req, res) {
+	let project = config.projects.find((prj) => {
+		return prj.name === req.params.name;
+	});
+
+	if(!project) {
+		return res.sendStatus(404);
+	}
+
+	let promiseList = [];
+	project.environmentHealth.forEach((envHealth) => {
+		promiseList.push(environmentHealthService.getEnvironmentHealth(envHealth.route, envHealth.env));
+	});
+	Promise.all(promiseList).then((result) => {
+		res.status(200).send(result);
+	});
 });
 
 module.exports = router;

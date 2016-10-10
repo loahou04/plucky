@@ -1,10 +1,24 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import api from './api';
+import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
+import AppBar from 'material-ui/AppBar';
+import './indexstyles.scss';
+// not sure why i need to do this but there is a warning about it
+import injectTapEventPlugin from 'react-tap-event-plugin';
+injectTapEventPlugin();
 
-api.getEnvironments().then((data) => {
-	console.log(data);
-});
+import Dashboard from './dashboard/dashboard';
 
-
-ReactDOM.render(<div> hello asdf</div>, document.getElementById('entry'));
+ReactDOM.render(
+	<MuiThemeProvider>
+		<div>
+			<AppBar
+				className="appBar"
+				title="Plucky" />
+			<div className="container-fluid app-body" style={{ paddingTop:'20px' }}>
+				<Dashboard />
+			</div>
+		</div>
+	</MuiThemeProvider>
+, document.getElementById('entry'));

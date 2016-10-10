@@ -4,20 +4,13 @@ var HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
 	entry: {
-		pluckyui: ['babel-polyfill', 'whatwg-fetch', './web/js/index.js']
+		pluckyui: ['babel-polyfill', 'whatwg-fetch', './web/js/index.js', 'webpack/hot/dev-server']
 	},
 	output: {
 		path: path.join(__dirname, 'web'),
 		filename: '[name]-[hash].js',
 		libraryTarget: 'umd',
 		publicPath: '/'
-	},
-	devServer: {
-		hot: true,
-		stats: {
-			colors: true
-		},
-		progress: true
 	},
 	plugins: [
 		new HtmlWebpackPlugin({
@@ -43,6 +36,13 @@ module.exports = {
 		}]
 	},
 	devServer: {
-		historyApiFallback: true// 404s will return index.html in webpack dev server
+		hot: true,
+		historyApiFallback: true,
+		proxy: {
+		  '/api/**': {
+		  	target: 'http://localhost:3000/'
+		  }
+		},
+		devtool: "inline-source-maps"
 	}
 };
