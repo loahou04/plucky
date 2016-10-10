@@ -7,9 +7,9 @@ let Mongo = require('mongodb');
 
 module.exports =  {
 
-	getReleases: function() {
+	getReleases: function(projectName) {
 		return new Promise((resolve, reject) => {
-			db.getConnection().collection(collection).find({}).toArray((err, docs) => {
+			db.getConnection().collection(collection).find({projectName: projectName}).toArray((err, docs) => {
 				if(err) {
 					return reject(err);
 				}

@@ -1,5 +1,5 @@
 import React from 'react';
-import api from '../api';
+import environmentApi from '../api/environmentApi';
 
 class EnvironmentHealth extends React.Component {
 
@@ -11,7 +11,7 @@ class EnvironmentHealth extends React.Component {
 	}
 
 	componentWillMount() {
-		api.getEnvironmentHealth(this.props.project).then((health) => {
+		environmentApi.getEnvironmentHealth(this.props.project).then((health) => {
 			console.log(health);
 			this.setState({
 				healthList: health
@@ -24,7 +24,6 @@ class EnvironmentHealth extends React.Component {
 	render() {
 		let envList = [];
 		this.state.healthList.forEach((healthObj) => {
-			console.log(healthObj.env);
 			envList.push(
 				<div key={`${healthObj.env}-${this.props.project}`}>
 					{healthObj.env}: {healthObj.detail.version ? healthObj.detail.version : `${healthObj.detail} ${healthObj.state}`}

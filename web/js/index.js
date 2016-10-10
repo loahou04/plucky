@@ -1,6 +1,5 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import api from './api';
 import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
 import AppBar from 'material-ui/AppBar';
 import './indexstyles.scss';
@@ -15,7 +14,8 @@ ReactDOM.render(
 		<div>
 			<AppBar
 				className="appBar"
-				title="Plucky" />
+				title="Plucky" 
+				style={{ backgroundColor: 'green' }} />
 			<div className="container-fluid app-body" style={{ paddingTop:'20px' }}>
 				<Dashboard />
 			</div>

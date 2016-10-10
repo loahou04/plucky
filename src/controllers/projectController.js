@@ -47,7 +47,7 @@ router.post('/:name', function(req, res) {
 			version: releaseVersion,
 			projectName: project.name,
 			projectBuilt: !project.needsBuildBeforeDeploy,
-			currentEnv: 'none',
+			releaseEnv: [],
 			environmentOrder: yaml.getOrderedEnvironments(project),
 		}).then((doc) => {
 			// immediately send the document but the UI will need to do calls to get the release object to know if the

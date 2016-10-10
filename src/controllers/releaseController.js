@@ -9,13 +9,11 @@ let express = require('express'),
 	execFile = require('child_process').execFile,
 	releaseService = require('../services/releaseService');
 
-function waitAndUpdateJob(jenkins, jobs) {
-
-}
-
-// get all releases
 router.get('/', function(req, res) {
-	releaseService.getReleases().then((releaseList) => {
+	if(!req.query.projectName) {
+		return res.status(400).send('Bad request, must send project name');	
+	}
+	releaseService.getReleases(req.query.projectName).then((releaseList) => {
 		res.status(200).send(releaseList);
 	});
 });
@@ -31,28 +29,27 @@ router.get('/:id', function(req, res) {
 });
 
 // deploy project with env
-router.post('/:id/deploy', function(req, res) {
-
-	releaseService.getReleasesById(req.params.id).then((release) => {
-		release.components.forEach((asset) => {
-			jenkins.startJob(project.jenkins, asset.name);
-		});
-		res.sendStatus(202);
-	});
-	let project = config.projects.find((prj) => {
-		return prj.name === req.params.name;
-	});
-
-	if(!project) {
-		return res.sendStatus(404);
-	}
+router.put('/:id/deploy', function(req, res) {
 	if(!req.query.env) {
 		// shouldn't ever happen since the UI would follow this step.  
 		return res.status(400).send('Bad request! env query parameter is required');	
 	}
-	let assetList = yaml.getBuildProjects(project).components;
-	assetList.forEach((asset) => {
-		jenkins.startJob(project.jenkins, asset.name);
+
+	releaseService.getReleasesById(req.params.id).then((release) => {
+		let project = config.projects.find((prj) => {
+			return prj.name === release.projectName;
+		});
+
+		if(!project) {
+			return res.status(500).send('Something terribly wrong has happened');
+		}
+		jenkins.executeJob('dev-deploy').then((result) => {
+			console.log('RESULT SUCCESSFUL', result);
+			res.sendStatus(202);
+		}).catch((err) => {
+			console.log('MAJOR ERROR', err);
+			res.sendStatus(500);
+		});
 	});
 });
 

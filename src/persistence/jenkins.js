@@ -1,12 +1,10 @@
 'use strict';
 
-let request = require('request');
 const logger = require('../utility/logger');
 const utils = require('../utility/utils');
 const requestET = require('../utility/requestET');
 const Boom = require('boom');
-
-
+const async = require('async');
 
 const statusFromColor = (color)=>{
 	switch(color){
@@ -18,7 +16,6 @@ const statusFromColor = (color)=>{
 		return color;
 	}
 };
-
 
 class Jenkins {
   constructor(options){
@@ -356,13 +353,13 @@ module.exports = {
 			});
 		});
 	},
-	startJob: function(config, job) {
+	executeJob: function(config, job) {
 		const jenkins = new Jenkins({
 			url: config.url,
 			auth: config.auth
 		});
 		return new Promise(function(resolve, reject) {
-			jenkins.startJob({jobName: job}, function(err, result) {
+			jenkins.executeJob({jobName: job}, function(err, result) {
 				if(err) {
 					return reject(err);
 				}
