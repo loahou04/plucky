@@ -47,13 +47,14 @@ router.post('/:name', function(req, res) {
 			version: releaseVersion,
 			projectName: project.name,
 			projectBuilt: !project.needsBuildBeforeDeploy,
-			releaseEnv: [],
+			releaseEnv: {},
 			environmentOrder: yaml.getOrderedEnvironments(project),
 		}).then((doc) => {
 			// immediately send the document but the UI will need to do calls to get the release object to know if the
 			// build finishes or fails
 			res.status(201).send(doc);
 			releaseId = doc._id;
+			// kick off seed-job instead of wait for idle
 			return jenkins.waitForIdle(project.jenkins, 'seed-job');
 		}).then(() => {
 			let jobs = [];
@@ -63,6 +64,8 @@ router.post('/:name', function(req, res) {
 					jobs.push(asset.name);
 				}
 			});
+
+			// may need to record current state and do some other type of lookup to see if the jobs are done or not
 			return jenkins.executeJobs(project.jenkins, jobs);
 		}).then((result) => {
 			if(result === 'failed') {

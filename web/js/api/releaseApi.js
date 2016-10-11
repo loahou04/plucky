@@ -8,5 +8,14 @@ export default {
 				'Content-Type': 'application/json'
 			}
 		});
+	},
+
+	pushReleaseToEnv: function(id, env) {
+		return fetchWrap(`/api/release/${id}/deploy?env=${env}`, {
+			method: 'PUT',
+			headers: {
+				'Content-Type': 'application/json'
+			}
+		});
 	}
 }

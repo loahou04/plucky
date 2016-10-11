@@ -12,7 +12,6 @@ class EnvironmentHealth extends React.Component {
 
 	componentWillMount() {
 		environmentApi.getEnvironmentHealth(this.props.project).then((health) => {
-			console.log(health);
 			this.setState({
 				healthList: health
 			});

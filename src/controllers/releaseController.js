@@ -34,22 +34,41 @@ router.put('/:id/deploy', function(req, res) {
 		// shouldn't ever happen since the UI would follow this step.  
 		return res.status(400).send('Bad request! env query parameter is required');	
 	}
-
+	let releaseObj;
 	releaseService.getReleasesById(req.params.id).then((release) => {
+		releaseObj = release;
 		let project = config.projects.find((prj) => {
 			return prj.name === release.projectName;
 		});
 
+		// This can't happen unless someone hacks it
 		if(!project) {
 			return res.status(500).send('Something terribly wrong has happened');
 		}
-		jenkins.executeJob('dev-deploy').then((result) => {
-			console.log('RESULT SUCCESSFUL', result);
-			res.sendStatus(202);
-		}).catch((err) => {
-			console.log('MAJOR ERROR', err);
-			res.sendStatus(500);
+
+		// if someone already hit the button and it is in progress....don't do it again
+		if(release.releaseEnv[req.query.env] === 'inprogress') {
+			return res.status(202).send(release);
+		}
+		// go ahead and respond with 202 accepted while the release keeps going
+		release.releaseEnv[req.query.env] = 'inprogress';
+		releaseService.updateRelease(releaseObj._id, {releaseEnv: releaseObj.releaseEnv}).then(() => {
+			res.status(202).send(release);
 		});
+
+		return jenkins.executeJob(project.jenkins, `${req.query.env}-deploy`, {console_VERSION:release.version});
+	}).then((result) => {
+		let releaseStatus = 'completed';
+		if(result === 'failed') {
+			releaseStatus = 'failed';
+		}
+		releaseObj.releaseEnv[req.query.env] = releaseStatus;
+		return releaseService.updateRelease(releaseObj._id, {releaseEnv: releaseObj.releaseEnv});
+	}).then((doc) => {
+		res.status(200).send(releaseObj);
+	}).catch((err) => {
+		console.log('Error in deploy job:', err);
+		res.status(500).send({error: err});
 	});
 });
 

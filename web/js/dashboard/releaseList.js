@@ -1,6 +1,8 @@
 import React from 'react';
 import releaseApi from '../api/releaseApi';
 import { Step, Stepper, StepButton } from 'material-ui/Stepper';
+import WarningIcon from 'material-ui/svg-icons/alert/warning';
+import {red500} from 'material-ui/styles/colors';
 
 class ReleaseList extends React.Component {
 	constructor(props) {
@@ -23,39 +25,57 @@ class ReleaseList extends React.Component {
 
 	deploy(id, env) {
 		console.log(`deploy ${env}`);
-
+		releaseApi.pushReleaseToEnv(id, env).then((releaseObj) => {
+			const idxRelease = this.state.releaseList.findIndex((obj) => {
+				return obj._id === releaseObj._id
+			});
+			this.setState({
+				releaseList: [
+					...this.state.releaseList.slice(0, idxRelease), 
+					releaseObj,
+					...this.state.releaseList.slice(idxRelease+1)
+				]
+			});
+			console.log('successful', releaseObj);
+		}).catch((error) => {
+			console.log('uh o', error);
+		});
 	}
 
 	createReleaseList() {
 		let releaseList = [];
 		this.state.releaseList.forEach((release) => {
-			// const releaseEnv = [];
+			const releaseEnv = [];
 
-			// if(release.projectBuilt) {
-			// 	release.environmentOrder.forEach((env) => {
-			// 		releaseEnv.push(
-			// 			<Step key={`${release._id}-${env}`}>
-			// 			</Step>
-			// 		);
-			// 	});
-			// }
+			if(release.projectBuilt) {
+				release.environmentOrder.forEach((env) => {
+					const releaseStatus = release.releaseEnv[env.name];
+					console.log(releaseStatus === 'inprogress');
+					if(releaseStatus === 'failed') {
+						return releaseEnv.push(
+							<Step key={`${release._id}-${env.name}`}>
+								<StepButton 
+									onClick={() => { this.deploy(release._id, env.name); }}
+									icon={<WarningIcon color={red500} />} >{env.name}</StepButton>
+							</Step>
+						);
+					}
+					releaseEnv.push(
+						<Step key={`${release._id}-${env.name}`}>
+							<StepButton 
+								onClick={() => { this.deploy(release._id, env.name); }}
+								active={(releaseStatus === 'inprogress')}
+								completed={(releaseStatus === 'completed')} >{env.name}</StepButton>
+						</Step>
+					);
+				});
+			}
 			releaseList.push(
 				<div key={release._id}>
 					<span>Version: {release.version}</span>
-					<span>Built: {release.projectBuilt} </span>
+					<span style={{paddingLeft: '10px'}}>Built: {`${release.projectBuilt}`} </span>
 					<Stepper linear={false}>
-						<Step>
-							<StepButton onClick={() => { this.deploy(release._id, 'dev'); }} completed>dev</StepButton>
-						</Step>
-						<Step>
-							<StepButton onClick={() => { this.deploy(release._id, 'qa'); }}>qa</StepButton>
-						</Step>
-						<Step>
-							<StepButton onClick={() => { this.deploy(release._id, 'stg'); }}>stg</StepButton>
-						</Step>
-						<Step>
-							<StepButton onClick={() => { this.deploy(release._id, 'prd'); }}>prd</StepButton>
-						</Step>
+						{releaseEnv}
 					</Stepper>
 				</div>
 			);
@@ -66,7 +86,6 @@ class ReleaseList extends React.Component {
 
 	render() {
 		const releaseList = this.createReleaseList();
-		// completed=release.releaseEnv.find(env);
 		return (
 			<div>
 				{releaseList}
