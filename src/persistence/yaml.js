@@ -4,10 +4,11 @@ let path = require('path');
 let yaml = require('js-yaml');
 let fs = require('fs');
 
-function orderedEnv(environments) {
+function orderEnvironmentList(environments) {
 	let orderedEnvList = environments.filter(function(env) {
 		return !env.next_environment;
 	});
+
 	for(let i = 0; i < environments.length; i++) {
 		let env = environments[i];
 		if(env.next_environment) {
@@ -40,7 +41,7 @@ module.exports = {
 	getOrderedEnvironments: function(config) {
 		let yamlConfig = getYamlFile(`${config.bitesizeFiles}/environments.bitesize`);
 
-		return orderedEnv(yamlConfig.environments);
+		return orderEnvironmentList(yamlConfig.environments);
 	},
 	getBuildProjects: function(config) {
 		

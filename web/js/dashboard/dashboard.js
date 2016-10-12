@@ -34,7 +34,7 @@ class Dashboard extends React.Component {
 	}
 
 	createProjectCards() {
-		let projectList = [];
+		const projectList = [];
 		this.state.projects.forEach((project) => {
 			projectList.push(
 				<div className="col-md-6" key={`${project.name}`}>

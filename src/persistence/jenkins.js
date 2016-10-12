@@ -342,12 +342,15 @@ class Jenkins {
 	}
 };
 
+// wrapping all of the jenkins calls into promises since i don't want to touch that code 
+// since it seems to already works
 module.exports = {
 	getJobs: function(config) {
 		const jenkins = new Jenkins({
 			url: config.url,
 			auth: jenkins.auth
 		});
+
 		return new Promise(function(resolve, reject) {
 			jenkins.getJobs({}, function(err, result) {
 				if(err) {
@@ -362,6 +365,7 @@ module.exports = {
 			url: config.url,
 			auth: config.auth
 		});
+
 		return new Promise(function(resolve, reject) {
 			jenkins.executeJob({jobName: job, params }, function(err, result) {
 				if(err) {
@@ -377,6 +381,7 @@ module.exports = {
 			url: config.url,
 			auth: config.auth
 		});
+
 		return new Promise(function(resolve, reject) {
 			jenkins.waitForIdle({jobName: job}, function(err, result) {
 				if(err) {
@@ -391,6 +396,7 @@ module.exports = {
 			url: config.url,
 			auth: config.auth
 		});
+
 		return new Promise(function(resolve, reject) {
 			jenkins.executeJobs(jobs, function(err, result) {
 				if(err) {

@@ -19,16 +19,17 @@ class ReleaseList extends React.Component {
 				releaseList
 			});
 		}).catch((error) => {
-			console.error(error);
+			console.log('Error!', error);
 		});
 	}
 
 	deploy(id, env) {
-		console.log(`deploy ${env}`);
 		releaseApi.pushReleaseToEnv(id, env).then((releaseObj) => {
 			const idxRelease = this.state.releaseList.findIndex((obj) => {
 				return obj._id === releaseObj._id
 			});
+
+			//replace release object with new release object
 			this.setState({
 				releaseList: [
 					...this.state.releaseList.slice(0, idxRelease), 
@@ -38,12 +39,12 @@ class ReleaseList extends React.Component {
 			});
 			console.log('successful', releaseObj);
 		}).catch((error) => {
-			console.log('uh o', error);
+			console.log('Error!', error);
 		});
 	}
 
 	createReleaseList() {
-		let releaseList = [];
+		const releaseList = [];
 		this.state.releaseList.forEach((release) => {
 			const releaseEnv = [];
 

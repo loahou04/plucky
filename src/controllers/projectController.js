@@ -24,7 +24,7 @@ router.post('/:name', function(req, res) {
 		return res.status(400).send('Bad request, version change must be patch \'p\', minor \'m\', or Major \'M\'  ');	
 	}
 
-	let project = config.projects.find((prj) => {
+	const project = config.projects.find((prj) => {
 		return prj.name === req.params.name;
 	});
 
@@ -32,7 +32,7 @@ router.post('/:name', function(req, res) {
 		return res.sendStatus(404);
 	}
 
-	let startDirectory = process.cwd();
+	const startDirectory = process.cwd();
 	process.chdir(project.bitesizeFiles);
 	const child = execFile('../hed-console/createbuild.sh', [`-${req.query.version}`], (err, stdout, stderr) => {
 		if (err) {
@@ -50,14 +50,15 @@ router.post('/:name', function(req, res) {
 			releaseEnv: {},
 			environmentOrder: yaml.getOrderedEnvironments(project),
 		}).then((doc) => {
-			// immediately send the document but the UI will need to do calls to get the release object to know if the
+			// immediately send the document but the UI will need to refresh to know if the
 			// build finishes or fails
 			res.status(201).send(doc);
 			releaseId = doc._id;
 			// kick off seed-job instead of wait for idle
 			return jenkins.waitForIdle(project.jenkins, 'seed-job');
 		}).then(() => {
-			let jobs = [];
+			const jobs = [];
+
 			yaml.getBuildProjects(project).components.forEach((asset) => {
 				const skipBuilds = project.skipBuilds.indexOf(asset.name);
 				if(skipBuilds === -1) {
@@ -87,7 +88,7 @@ router.post('/:name', function(req, res) {
 });
 
 router.get('/:name/health', function(req, res) {
-	let project = config.projects.find((prj) => {
+	const project = config.projects.find((prj) => {
 		return prj.name === req.params.name;
 	});
 
@@ -95,10 +96,11 @@ router.get('/:name/health', function(req, res) {
 		return res.sendStatus(404);
 	}
 
-	let promiseList = [];
+	const promiseList = [];
 	project.environmentHealth.forEach((envHealth) => {
 		promiseList.push(environmentHealthService.getEnvironmentHealth(envHealth.route, envHealth.env));
 	});
+	
 	Promise.all(promiseList).then((result) => {
 		res.status(200).send(result);
 	});
